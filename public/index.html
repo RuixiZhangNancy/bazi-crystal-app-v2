@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Bazi Crystal Recommendation</title>
+</head>
+<body>
+  <div id="bazi-app">
+    <form id="page1">
+      <label>Birth Date & Time:<br>
+        <input type="datetime-local" id="birthdate" required>
+      </label><br>
+      <label>Your Time Zone:<br>
+        <select id="timezone" required>
+          <option value="Asia/Shanghai">China Standard Time (UTC+8)</option>
+          <option value="America/New_York">US Eastern (UTC-5)</option>
+          <option value="Europe/Paris">Europe (UTC+1)</option>
+        </select>
+      </label><br>
+      <button type="button" onclick="nextPage(1)">Next</button>
+    </form>
+
+    <form id="page2" style="display:none;">
+      <label>What are you struggling with?<br>
+        <input type="text" id="problem" placeholder="(Optional)">
+      </label><br>
+      <button type="button" onclick="nextPage(2)">Next</button>
+    </form>
+
+    <form id="page3" style="display:none;">
+      <label>Select up to 2 areas you want to improve:</label><br>
+      <input type="checkbox" name="luck" value="Career"> Career
+      <input type="checkbox" name="luck" value="Academics"> Academics
+      <input type="checkbox" name="luck" value="Relationships"> Relationships
+      <input type="checkbox" name="luck" value="Love"> Love
+      <input type="checkbox" name="luck" value="Health"> Health
+      <input type="checkbox" name="luck" value="Wealth"> Wealth
+      <br><br>
+      <button type="button" onclick="submitBazi()">Get My Crystal Recommendation</button>
+    </form>
+
+    <div id="result" style="display:none;"></div>
+  </div>
+
+  <script>
+    let formData = {};
+    function nextPage(step){
+      if(step === 1){
+        formData.birthdate = document.getElementById('birthdate').value;
+        formData.timezone = document.getElementById('timezone').value;
+        if (!formData.birthdate || !formData.timezone) {
+          return alert('Please complete the form.');
+        }
+        document.getElementById('page1').style.display = 'none';
+        document.getElementById('page2').style.display = 'block';
+      } else if(step === 2){
+        formData.problem = document.getElementById('problem').value;
+        document.getElementById('page2').style.display = 'none';
+        document.getElementById('page3').style.display = 'block';
+      }
+    }
+
+    async function submitBazi(){
+      const selected = Array.from(document.querySelectorAll('input[name="luck"]:checked')).map(cb => cb.value);
+      if (selected.length > 2) return alert("You can only select up to 2 areas.");
+      formData.luck = selected;
+
+      try {
+        const res = await fetch('/api/bazi', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(formData)
+        });
+        const data = await res.json();
+        if (!data || data.error) throw new Error("Failed to analyze");
+
+        const result = document.getElementById('result');
+        result.innerHTML = `
+          <h2>🔮 Your Bazi</h2>
+          <p>${data.bazi.join(' | ')}</p>
+          <h3>Five Elements:</h3>
+          <pre>${JSON.stringify(data.elements, null, 2)}</pre>
+          <h3>Missing Elements:</h3>
+          <p>${data.missingElements.join(', ')}</p>
+          <h3>Crystal Recommendations:</h3>
+          <ul>${data.recommendedCrystals.map(c => `<li><strong>${c.name}</strong>: ${c.reason} <a href="${c.link}">[View]</a></li>`).join('')}</ul>
+        `;
+        result.style.display = 'block';
+      } catch (err) {
+        console.error(err);
+        alert("Something went wrong. Please try again later.");
+      }
+    }
+  </script>
+</body>
+</html>
