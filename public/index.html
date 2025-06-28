@@ -63,9 +63,10 @@
         const birthDateObj = new Date(birthdateISO);
 
         // Add to formData
-        formData.birthdate = birthdateISO;
-        formData.timezone = document.getElementById('timezone').value;
-
+        const formData = {
+          birthdate: birthdateISO,
+          timezone: document.getElementById('timezone').value
+        };
         document.getElementById('page1').style.display = 'none';
         document.getElementById('page2').style.display = 'block';
       } else if (step === 2) {
