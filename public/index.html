@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <title>Bazi Crystal Recommendation</title>
 </head>
+
 <body>
   <div id="bazi-app">
     <form id="page1">
@@ -44,23 +46,36 @@
 
   <script>
     let formData = {};
-    function nextPage(step){
-      if(step === 1){
-        formData.birthdate = document.getElementById('birthdate').value;
-        formData.timezone = document.getElementById('timezone').value;
-        if (!formData.birthdate || !formData.timezone) {
-          return alert('Please complete the form.');
+    function nextPage(step) {
+      if (step === 1) {
+        const date = document.getElementById('birthdate').value; // e.g., "1990-06-28"
+        const time = document.getElementById('birthtime').value; // e.g., "06:30"
+
+        if (!date || !time) {
+          alert("Please select both date and time.");
+          return;
         }
+
+        // Combine into ISO 8601 string
+        const birthdateISO = `${date}T${time}:00`; // e.g., "1990-06-28T06:30:00"
+
+        // Optional: create actual JS Date object if needed
+        const birthDateObj = new Date(birthdateISO);
+
+        // Add to formData
+        formData.birthdate = birthdateISO;
+        formData.timezone = document.getElementById('timezone').value;
+
         document.getElementById('page1').style.display = 'none';
         document.getElementById('page2').style.display = 'block';
-      } else if(step === 2){
+      } else if (step === 2) {
         formData.problem = document.getElementById('problem').value;
         document.getElementById('page2').style.display = 'none';
         document.getElementById('page3').style.display = 'block';
       }
     }
 
-    async function submitBazi(){
+    async function submitBazi() {
       const selected = Array.from(document.querySelectorAll('input[name="luck"]:checked')).map(cb => cb.value);
       if (selected.length > 2) return alert("You can only select up to 2 areas.");
       formData.luck = selected;
@@ -68,7 +83,7 @@
       try {
         const res = await fetch('/api/bazi', {
           method: 'POST',
-          headers: {'Content-Type': 'application/json'},
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(formData)
         });
         const data = await res.json();
@@ -77,13 +92,13 @@
         const result = document.getElementById('result');
         result.innerHTML = `
           <h2>🔮 Your Bazi</h2>
-          <p>${data.bazi.join(' | ')}</p>
+          <p>${data.bazi.join(' | ')}</p >
           <h3>Five Elements:</h3>
           <pre>${JSON.stringify(data.elements, null, 2)}</pre>
           <h3>Missing Elements:</h3>
-          <p>${data.missingElements.join(', ')}</p>
+          <p>${data.missingElements.join(', ')}</p >
           <h3>Crystal Recommendations:</h3>
-          <ul>${data.recommendedCrystals.map(c => `<li><strong>${c.name}</strong>: ${c.reason} <a href="${c.link}">[View]</a></li>`).join('')}</ul>
+          <ul>${data.recommendedCrystals.map(c => `<li><strong>${c.name}</strong>: ${c.reason} [View]</li>`).join('')}</ul>
         `;
         result.style.display = 'block';
       } catch (err) {
@@ -93,4 +108,5 @@
     }
   </script>
 </body>
+
 </html>
